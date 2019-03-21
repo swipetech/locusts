@@ -9,9 +9,7 @@ from argparse import ArgumentParser
 def parse(args: list = None) -> dict:
     """ """
 
-    with open('/scripts/locust.config.json') as f:
-        configs: dict = json.load(f)
-
+    configs = {}
     parser = ArgumentParser()
 
     parser.add_argument(
@@ -19,6 +17,13 @@ def parse(args: list = None) -> dict:
         dest='master_host',
         default=None,
         help='The hostname/ip of the master instance'
+    )
+
+    parser.add_argument(
+        '--host',
+        dest='host',
+        default=None,
+        help='The hostname/ip of the service to test'
     )
 
     configs.update(vars(parser.parse_args(args)))
@@ -46,18 +51,11 @@ def make_command(args: dict) -> str:
         'locust',
         '-f', '"{}"'.format(get_locust_file()),
         '--master' if args['is_master'] else '--slave',
-        '--host={}'.format(args['target'])
+        '--host={}'.format(args['host'])
     ]
 
     if not args.get('is_master'):
         cmd.append('--master-host={}'.format(args['master_host']))
-
-    try:
-        locusts = args['locusts']
-        cmd += [locusts] if hasattr(locusts, 'find') else locusts
-    except Exception:
-        print('[ERROR]: Invalid or missing "locusts" config attribute')
-        raise
 
     return ' '.join(cmd)
 
